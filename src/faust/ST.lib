@@ -1,0 +1,71 @@
+import("stdfaust.lib");
+
+// UTILITIES
+// pink filter coefficients
+pink_filter = fi.iir((0.049922035, -0.095993537, 0.050612699, -0.004408786),
+                    (-2.494956002, 2.017265875, -0.522189400));
+// 4ch decorrelated pink noise
+multipink = no.multinoise(4) : par(i,4,pink_filter : *(4));
+
+// AMBIX
+// first order
+a0 = 1;
+a1(a,e) = sin(a)*cos(e);
+a2(e) = sin(e);
+a3(a,e) = cos(a)*cos(e);
+
+// ENCODERS
+// mono to first order
+mto1o(a,e) = _ <: _*a0,
+                  _*a1(a,e),
+                  _*a2(e),
+                  _*a3(a,e);
+                  
+// STEREO
+// SDMX
+nsum = +/sqrt(2);
+ndif = -/sqrt(2);
+sdmx = _,_ <: nsum, ndif;
+sdmxw(p) = sdmx : *(1-p), *(p);
+
+bamodule(W,X,Y,Z) = LFU,RFD,RBU,LBD
+  with{
+	  LFU = (W*sqrt(2) + X + Y + Z)/(2);
+	  RFD = (W*sqrt(2) + X - Y - Z)/(2);
+	  RBU = (W*sqrt(2) - X - Y + Z)/(2);
+      LBD = (W*sqrt(2) - X + Y - Z)/(2);
+};
+
+bamodulex(a0,a1,a2,a3) = lfu(a0,a1,a2,a3),rfd(a0,a1,a2,a3),rbu(a0,a1,a2,a3),lbd(a0,a1,a2,a3)
+  with{
+    lfu(a0,a1,a2,a3) = (a0 + a1 + a2 + a3)/2;
+    rfd(a0,a1,a2,a3) = (a0 - a1 - a2 + a3)/2;
+    rbu(a0,a1,a2,a3) = (a0 - a1 + a2 - a3)/2;
+    lbd(a0,a1,a2,a3) = (a0 + a1 - a2 - a3)/2;
+  };
+
+stone = par(i,4,fi.highshelf(3,-18,110));
+stooge = par(i,4,fi.highshelf(3,-18,80));
+sths(lfu,rfd,rbu,lbd,db,fc) = lfu,rfd,rbu,lbd : par(i,4,fi.highshelf(3,db,fc));
+
+// ms to ambix 1
+mspola1(m,s,a0g,a2g) = m <: *(a0g), s, *(sin(a2g)), *(cos(a2g));
+
+// lr to ambix 1
+lr2a1(a0g,a2g) = sdmx <: mspola1;
+
+atofuma(a0,a1,a2,a3) = a0/sqrt(2), a3, a1, a2;
+fumatoa(w,x,y,z) = w*sqrt(2), y, z, x;
+
+// LINKWITZ RILEY CROSSOVER
+// lr4 x2 butterworth
+lr4(fc) = _ <: seq(i,2,fi.lowpass(2,fc)), seq(i,2,fi.highpass(2,fc));
+
+// bformat lr4
+blr4(w,x,y,z,fc) =  (w : lr4(fc)),
+            (x : lr4(fc) : !,_),
+            (y : lr4(fc) : !,_),
+            (z : lr4(fc) : !,_):
+            ro.cross1n(4);
+
+//process = blr4;
