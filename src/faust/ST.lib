@@ -16,10 +16,16 @@ a3(a,e) = cos(a)*cos(e);
 
 // ENCODERS
 // mono to first order
-mto1o(a,e) = _ <: _*a0,
+mto1ox(a,e) = _ <: _*a0,
                   _*a1(a,e),
                   _*a2(e),
                   _*a3(a,e);
+
+// mono to first order with polar pattern
+mto1oxp(a,e,pp) = _ <: _*a0*(1-pp),
+                  _*a1(a,e)*(pp),
+                  _*a2(e)*(pp),
+                  _*a3(a,e)*(pp);
                   
 // STEREO
 // SDMX

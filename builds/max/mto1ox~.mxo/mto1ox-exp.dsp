@@ -1,0 +1,18 @@
+declare version "2.59.6";
+declare compile_options "-double -omp -vec -double -e ./mto1ox.dsp -o faust.aVm/mto1ox/mto1ox-exp.dsp";
+declare library_path0 "/Users/master/Documents/GitHub/st/src/faust/ST.lib";
+declare library_path1 "/usr/local/share/faust/stdfaust.lib";
+declare library_path2 "/usr/local/share/faust/routes.lib";
+declare filename "mto1ox.dsp";
+declare name "mto1ox";
+declare routes_lib_name "Faust Signal Routing Library";
+declare routes_lib_version "0.2";
+declare vendor "Giuseppe Silvi";
+ID_0 = 3, 2;
+ID_1 = 1, ID_0;
+ID_2 = 2, ID_1;
+ID_3 = 3, ID_2;
+ID_4 = 1, ID_3;
+ID_5 = route(3,3,ID_4);
+ID_6 = ID_5 : \(x1).(\(x2).(_<:(_,1 : *),(_,((x1 : sin),(x2 : cos) : *) : *),(_,(x2 : sin) : *),(_,((x1 : cos),(x2 : cos) : *) : *)));
+process = ID_6;
